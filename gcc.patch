@@ -1,0 +1,13 @@
+diff --git a/gcc/doc/extend.texi b/gcc/doc/extend.texi
+index 689ec7de4d3..84f9b9ecd66 100644
+--- a/gcc/doc/extend.texi
++++ b/gcc/doc/extend.texi
+@@ -2487,7 +2487,7 @@ The following attributes are supported on most targets.
+ @table @code
+ @c Keep this table alphabetized by attribute name.  Treat _ as space.
+ 
+-@itemx access (@var{access-mode}, @var{ref-index})
++@item access (@var{access-mode}, @var{ref-index})
+ @itemx access (@var{access-mode}, @var{ref-index}, @var{size-index})
+ 
+ The @code{access} attribute enables the detection of invalid or unsafe

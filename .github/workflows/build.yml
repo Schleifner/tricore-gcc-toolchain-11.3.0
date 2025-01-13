@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  create:
+    tags:
+      - release-*
+
+env:
+  uploadedArtifactName: tricore-gcc-toolchain
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'create'
+    runs-on: [ubuntu-latest]
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    needs: [build]
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.uploadedArtifactName }}
+          path: ${{ github.workspace }}
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: ${{ github.workspace }}
+      - name: create release
+        id: createRelease
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+      - name: Upload Release Assets
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["./*"]'
+
+  build:
+    name: Linux Build
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install tools Linux
+        run: sudo apt update && sudo apt install build-essential libmpfrc++-dev libmpc-dev libgmp-dev flex texinfo flex bison -y --no-install-recommends
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: "true"
+          ref: ${{ github.ref }}
+
+      - name: Apply patch
+        run: |
+          (cd tricore-gcc && git apply ../gcc.patch)
+
+      - name: build gcc
+        run: ./build-toolchain --all
+
+      - name: tar
+        run: tar -czf tricore-gcc-toolchain.tar.gz INSTALL
+
+      - uses: actions/upload-artifact@v3
+        if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'create'
+        with:
+          name: ${{ env.uploadedArtifactName }}
+          path: tricore-gcc-toolchain.tar.gz
